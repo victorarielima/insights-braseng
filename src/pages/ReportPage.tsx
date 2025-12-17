@@ -8,6 +8,7 @@ import { CampaignHeader } from '@/components/CampaignHeader';
 import { AdContentCard } from '@/components/AdContentCard';
 import { TargetingCard } from '@/components/TargetingCard';
 import { VideoPlayerCard } from '@/components/VideoPlayerCard';
+import { InsightsChat } from '@/components/InsightsChat';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -29,6 +30,7 @@ export default function ReportPage() {
     const [report, setReport] = useState<ProcessedReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [chatOpen, setChatOpen] = useState(false);
 
     useEffect(() => {
         const loadReport = async () => {
@@ -191,13 +193,14 @@ export default function ReportPage() {
                 <CampaignHeader report={report} onReset={handleBack} />
 
                 {/* Main Content Section - Video/Image + Ad Content + Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
-                    {/* Left Column - Video/Image + Button + Retention + Targeting */}
-                    {report.videoUrl && (
-                        <div className="flex flex-col gap-4">
+                {report.videoUrl ? (
+                    // Layout with video/image
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 items-start">
+                        {/* Left Column - Video/Image + Button + Retention + Targeting */}
+                        <div className="flex flex-col gap-3 md:gap-4">
                             {/* Video/Image Card */}
-                            <div className="glass-card p-4 animate-slide-up h-fit" style={{ animationDelay: '100ms' }}>
-                                <h3 className="text-lg font-semibold text-foreground mb-3">
+                            <div className="glass-card p-3 sm:p-4 animate-slide-up h-fit" style={{ animationDelay: '100ms' }}>
+                                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2 sm:mb-3">
                                     {report.isImage ? 'Imagem do Anúncio' : 'Vídeo do Anúncio'}
                                 </h3>
 
@@ -224,7 +227,7 @@ export default function ReportPage() {
                             {/* Generate Insights Button - Outside the card */}
                             <Button
                                 className="w-full gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
-                                onClick={() => console.log('Gerar insights para', report.id)}
+                                onClick={() => setChatOpen(true)}
                             >
                                 <Zap className="w-4 h-4" />
                                 Gerar Insights
@@ -289,19 +292,90 @@ export default function ReportPage() {
                             {/* Targeting Card */}
                             <TargetingCard settings={report.settings} />
                         </div>
-                    )}
 
-                    {/* If no video/image, show targeting card alone in left column */}
-                    {!report.videoUrl && (
-                        <TargetingCard settings={report.settings} />
-                    )}
+                        {/* Right Column - Ad Content + Metrics Cards */}
+                        <div className="flex flex-col gap-3 md:gap-4">
+                            <AdContentCard content={report.content} />
 
-                    {/* Right Column - Ad Content + Metrics Cards */}
-                    <div className="flex flex-col gap-4">
+                            {/* Metrics Cards */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                                <MetricCard
+                                    title="Investimento Total"
+                                    value={formatCurrency(report.investment.totalSpent)}
+                                    icon={<DollarSign className="w-4 h-4" />}
+                                    variant="primary"
+                                    delay={0}
+                                />
+                                <MetricCard
+                                    title="Alcance"
+                                    value={formatNumber(report.investment.reach)}
+                                    icon={<Users className="w-4 h-4" />}
+                                    subtitle="pessoas únicas"
+                                    variant="accent"
+                                    delay={100}
+                                />
+                                <MetricCard
+                                    title="Impressões"
+                                    value={formatNumber(report.investment.impressions)}
+                                    icon={<Eye className="w-4 h-4" />}
+                                    subtitle={`Frequência: ${report.investment.frequency.toFixed(2)}`}
+                                    delay={200}
+                                />
+                                <MetricCard
+                                    title="CPM"
+                                    value={formatCurrency(report.investment.cpm)}
+                                    icon={<TrendingUp className="w-4 h-4" />}
+                                    subtitle="custo por mil"
+                                    variant="warning"
+                                    delay={300}
+                                />
+                                <MetricCard
+                                    title="Cliques Totais"
+                                    value={formatNumber(report.clicks.totalClicks)}
+                                    icon={<MousePointerClick className="w-4 h-4" />}
+                                    delay={400}
+                                />
+                                <MetricCard
+                                    title="Cliques Únicos"
+                                    value={formatNumber(report.clicks.uniqueClicks)}
+                                    icon={<Target className="w-4 h-4" />}
+                                    delay={500}
+                                />
+                                <MetricCard
+                                    title="CTR"
+                                    value={`${report.clicks.ctr.toFixed(2)}%`}
+                                    icon={<Zap className="w-4 h-4" />}
+                                    subtitle="taxa de cliques"
+                                    variant="success"
+                                    delay={600}
+                                />
+                                <MetricCard
+                                    title="CPC"
+                                    value={formatCurrency(report.clicks.cpc)}
+                                    icon={<DollarSign className="w-4 h-4" />}
+                                    subtitle="custo por clique"
+                                    delay={700}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    // Layout without video/image - full width, single column
+                    <div className="flex flex-col gap-6 mb-6">
                         <AdContentCard content={report.content} />
+                        <TargetingCard settings={report.settings} />
+
+                        {/* Generate Insights Button */}
+                        <Button
+                            className="w-full gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                            onClick={() => setChatOpen(true)}
+                        >
+                            <Zap className="w-4 h-4" />
+                            Gerar Insights
+                        </Button>
 
                         {/* Metrics Cards */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <MetricCard
                                 title="Investimento Total"
                                 value={formatCurrency(report.investment.totalSpent)}
@@ -361,7 +435,7 @@ export default function ReportPage() {
                             />
                         </div>
                     </div>
-                </div>
+                )}
 
 
                 {/* Charts Section - Bottom */}
@@ -370,7 +444,14 @@ export default function ReportPage() {
                     <EngagementChart data={report.results} />
                 </div>
 
-
+                {/* Insights Chat Modal */}
+                {report && (
+                    <InsightsChat
+                        isOpen={chatOpen}
+                        onClose={() => setChatOpen(false)}
+                        report={report}
+                    />
+                )}
             </div>
         </div>
     );

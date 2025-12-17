@@ -16,11 +16,36 @@ import {
   Search
 } from 'lucide-react';
 
+// Função para gerar hash dos dados (para detectar mudanças)
+const generateDataHash = (data: ProcessedReport[]): string => {
+  const relevant = data.map(r => ({
+    id: r.id,
+    campaignName: r.campaignName,
+    updatedAt: r.updatedAt,
+    investment: r.investment.totalSpent,
+  }));
+  return JSON.stringify(relevant);
+};
+
+interface CacheData {
+  reports: ProcessedReport[];
+  hash: string;
+  timestamp: number;
+}
+
 export default function Index() {
   const [reports, setReports] = useState<ProcessedReport[]>(() => {
     // Carregar dados do localStorage na inicialização
     const cached = localStorage.getItem('campaignReports');
-    return cached ? JSON.parse(cached) : [];
+    if (cached) {
+      try {
+        const cacheData: CacheData = JSON.parse(cached);
+        return cacheData.reports || [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
   });
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -38,19 +63,66 @@ export default function Index() {
   }, [reports, searchTerm]);
 
   const saveToCache = (data: ProcessedReport[]) => {
-    localStorage.setItem('campaignReports', JSON.stringify(data));
+    const cacheData: CacheData = {
+      reports: data,
+      hash: generateDataHash(data),
+      timestamp: Date.now(),
+    };
+    localStorage.setItem('campaignReports', JSON.stringify(cacheData));
     setReports(data);
   };
 
-  const loadReports = async () => {
+  const getCachedData = (): ProcessedReport[] | null => {
+    const cached = localStorage.getItem('campaignReports');
+    if (cached) {
+      try {
+        const cacheData: CacheData = JSON.parse(cached);
+        return cacheData.reports || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const loadReports = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchReports();
-      saveToCache(data);
+      const freshData = await fetchReports();
+      const freshHash = generateDataHash(freshData);
+      
+      // Se não estamos forçando refresh, verificar se os dados mudaram
+      if (!forceRefresh) {
+        const cached = localStorage.getItem('campaignReports');
+        if (cached) {
+          try {
+            const cacheData: CacheData = JSON.parse(cached);
+            // Se o hash é igual, os dados não mudaram
+            if (cacheData.hash === freshHash) {
+              setReports(cacheData.reports);
+              setHasLoaded(true);
+              setLoading(false);
+              return;
+            }
+          } catch {
+            // Se houver erro ao parsear cache, continuar com fresh data
+          }
+        }
+      }
+      
+      // Dados mudaram ou forceRefresh é true, usar dados frescos
+      saveToCache(freshData);
       setHasLoaded(true);
     } catch (err) {
-      setError('Não foi possível carregar os relatórios. Tente novamente.');
+      // Se houver erro ao buscar dados frescos, tentar usar cache
+      const cachedData = getCachedData();
+      if (cachedData && !forceRefresh) {
+        setReports(cachedData);
+        setHasLoaded(true);
+      } else {
+        setError('Não foi possível carregar os relatórios. Tente novamente.');
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -74,6 +146,13 @@ export default function Index() {
       setGenerating(false);
       setLoading(false);
     }
+  };
+
+  const clearCache = () => {
+    localStorage.removeItem('campaignReports');
+    setReports([]);
+    setHasLoaded(false);
+    setSearchTerm('');
   };
 
   const activeReports = reports.filter(r => r.settings.status === 'ACTIVE').length;
@@ -134,6 +213,18 @@ export default function Index() {
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">Atualizar</span>
               </Button>
+              {hasLoaded && reports.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearCache}
+                  className="gap-2 border-white/10 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title="Limpar cache e recarregar dados"
+                >
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Limpar</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -148,45 +239,45 @@ export default function Index() {
 
         <div className="relative container mx-auto px-6 py-8 max-w-7xl">
           {/* Stats Grid - Single Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-card border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-primary/20">
-                  <BarChart3 className="w-5 h-5 text-primary" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-primary/20">
+                  <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-foreground">{reports.length}</p>
-              <p className="text-sm text-muted-foreground mt-1">Total de Campanhas</p>
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{reports.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total de Campanhas</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-card border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-primary/20">
-                  <TrendingUp className="w-5 h-5 text-primary" />
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-primary/20">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-foreground">{activeReports}</p>
-              <p className="text-sm text-muted-foreground mt-1">Campanhas Ativas</p>
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{activeReports}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Campanhas Ativas</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-card border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-warning/20">
-                  <DollarSign className="w-5 h-5 text-warning" />
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-warning/40 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-warning/20">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalInvestment)}</p>
-              <p className="text-sm text-muted-foreground mt-1">Total Investido</p>
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{formatCurrency(totalInvestment)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Investido</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-card border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-accent/20">
-                  <Target className="w-5 h-5 text-accent" />
+            <div className="p-4 sm:p-5 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:border-accent/40 transition-all">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="p-2 sm:p-2.5 rounded-xl bg-accent/20">
+                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-foreground">{formatNumber(totalReach)}</p>
-              <p className="text-sm text-muted-foreground mt-1">Alcance Total</p>
+              <p className="text-2xl sm:text-3xl font-bold text-foreground">{formatNumber(totalReach)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Alcance Total</p>
             </div>
           </div>
         </div>
@@ -252,7 +343,7 @@ export default function Index() {
         {/* Loading State */}
         {
           loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="p-6 rounded-2xl border border-white/10 bg-card/50 space-y-4">
                   <Skeleton className="h-6 w-3/4" />
@@ -272,7 +363,7 @@ export default function Index() {
         {/* Reports Grid */}
         {
           !loading && !error && reports.length > 0 && filteredReports.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredReports.map((report, index) => (
                 <ReportCard
                   key={report.id}

@@ -18,6 +18,7 @@ export interface ProcessedReport extends CampaignReport {
     adLink: string | null;
     updatedAt: string | null;
     isImage?: boolean;
+    reportText: string;
 }
 
 const WEBHOOK_URL = 'https://n8n.nexosoftwere.cloud/webhook/00f1afb5-6781-48b4-ac4d-9d2c4e998022';
@@ -54,7 +55,7 @@ export async function generateReports(): Promise<ProcessedReport[]> {
         const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
         const isImage = hasLink && imageExtensions.some(ext => adLink!.toLowerCase().includes(ext));
 
-        return {
+        const report: ProcessedReport = {
             ...parsed,
             id: String(item.id),
             campaignName: item.nome_anuncio || parsed.campaignName,
@@ -63,11 +64,14 @@ export async function generateReports(): Promise<ProcessedReport[]> {
             videoUrl: hasLink ? adLink : null,
             adLink: hasLink ? adLink : null,
             isImage,
+            reportText: item.relatorio,
             settings: {
                 ...parsed.settings,
                 status: item.status_real || item.status || parsed.settings.status
             }
         };
+        
+        return report;
     });
 }
 
@@ -103,7 +107,7 @@ export async function fetchReports(): Promise<ProcessedReport[]> {
             const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
             const isImage = hasLink && imageExtensions.some(ext => adLink!.toLowerCase().includes(ext));
 
-            return {
+            const report: ProcessedReport = {
                 ...parsed,
                 id: String(item.id),
                 campaignName: item.nome_anuncio || parsed.campaignName,
@@ -112,11 +116,14 @@ export async function fetchReports(): Promise<ProcessedReport[]> {
                 videoUrl: hasLink ? adLink : null,
                 adLink: hasLink ? adLink : null,
                 isImage,
+                reportText: item.relatorio,
                 settings: {
                     ...parsed.settings,
                     status: item.status_real || item.status || parsed.settings.status
                 }
             };
+            
+            return report;
         });
     } catch (error) {
         console.error('Error fetching reports:', error);

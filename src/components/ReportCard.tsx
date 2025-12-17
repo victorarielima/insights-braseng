@@ -86,13 +86,13 @@ export function ReportCard({ report, delay = 0 }: ReportCardProps) {
                 </Badge>
             </div>
 
-            <div className="relative p-5 space-y-3">
+            <div className="relative p-4 sm:p-5 space-y-3">
                 {/* Header */}
-                <div className="space-y-2 pr-24">
-                    <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+                <div className="space-y-2 pr-20 sm:pr-24">
+                    <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                         {report.campaignName}
                     </h3>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs">
+                    <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-muted-foreground text-[10px] sm:text-xs">
                         <div className="flex items-center gap-1.5">
                             <Calendar className="w-3 h-3" />
                             <span>{report.createdAt || 'N/A'}</span>
@@ -108,43 +108,43 @@ export function ReportCard({ report, delay = 0 }: ReportCardProps) {
 
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
-                        <div className="p-1.5 rounded-md bg-primary/15">
-                            <DollarSign className="w-3.5 h-3.5 text-primary" />
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
+                        <div className="p-1 sm:p-1.5 rounded-md bg-primary/15 flex-shrink-0">
+                            <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Investimento</p>
-                            <p className="font-bold text-sm text-foreground truncate">{formatCurrency(report.investment.totalSpent)}</p>
+                            <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Investimento</p>
+                            <p className="font-bold text-xs sm:text-sm text-foreground truncate">{formatCurrency(report.investment.totalSpent)}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
-                        <div className="p-1.5 rounded-md bg-blue-500/15">
-                            <Users className="w-3.5 h-3.5 text-blue-400" />
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
+                        <div className="p-1 sm:p-1.5 rounded-md bg-blue-500/15 flex-shrink-0">
+                            <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-400" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Alcance</p>
-                            <p className="font-bold text-sm text-foreground truncate">{formatNumber(report.investment.reach)}</p>
+                            <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Alcance</p>
+                            <p className="font-bold text-xs sm:text-sm text-foreground truncate">{formatNumber(report.investment.reach)}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
-                        <div className="p-1.5 rounded-md bg-emerald-500/15">
-                            <MousePointerClick className="w-3.5 h-3.5 text-emerald-400" />
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
+                        <div className="p-1 sm:p-1.5 rounded-md bg-emerald-500/15 flex-shrink-0">
+                            <MousePointerClick className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Cliques</p>
-                            <p className="font-bold text-sm text-foreground truncate">{formatNumber(report.clicks.totalClicks)}</p>
+                            <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-medium">Cliques</p>
+                            <p className="font-bold text-xs sm:text-sm text-foreground truncate">{formatNumber(report.clicks.totalClicks)}</p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
-                        <div className="p-1.5 rounded-md bg-amber-500/15">
-                            <TrendingUp className="w-3.5 h-3.5 text-amber-400" />
+                    <div className="flex items-center gap-2 p-2 sm:p-2.5 rounded-lg bg-white/[0.03] border border-white/5 group-hover:bg-white/[0.05] transition-colors">
+                        <div className="p-1 sm:p-1.5 rounded-md bg-amber-500/15 flex-shrink-0">
+                            <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">CTR</p>
-                            <p className="font-bold text-sm text-foreground truncate">{report.clicks.ctr.toFixed(2)}%</p>
+                            <p className="text-[8px] sm:text-[9px] uppercase tracking-wider text-muted-foreground font-medium">CTR</p>
+                            <p className="font-bold text-xs sm:text-sm text-foreground truncate">{report.clicks.ctr.toFixed(2)}%</p>
                         </div>
                     </div>
                 </div>
