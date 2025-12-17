@@ -45,8 +45,17 @@ export default function ReportPage() {
                 let reports: ProcessedReport[] = [];
 
                 if (cached) {
-                    reports = JSON.parse(cached);
-                } else {
+                    try {
+                        const cacheData = JSON.parse(cached);
+                        // Nova estrutura do cache tem 'reports', 'hash', 'timestamp'
+                        reports = cacheData.reports || cacheData;
+                    } catch {
+                        // Se falhar ao parsear, trata como array simples
+                        reports = [];
+                    }
+                }
+
+                if (reports.length === 0) {
                     // If no cache, fetch from API
                     reports = await fetchReports();
                     localStorage.setItem('campaignReports', JSON.stringify(reports));
